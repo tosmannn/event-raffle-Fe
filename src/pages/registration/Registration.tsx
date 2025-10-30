@@ -5,6 +5,7 @@ import { Toast } from "primereact/toast";
 import { ToastService } from "../../services/toastService";
 import { ParticipantService } from "../../services/participantService";
 import { AxiosError } from "axios";
+import RegistrationTable from "../../components/RegistrationTable";
 
 const Registration = () => {
     const { activeEvent } = useEventContext();
@@ -42,10 +43,17 @@ const Registration = () => {
         return null;
     }
 
-
-
     //return <Toast useRef= here>
-    return (<h1>Registration</h1>)
+    return (
+        <>
+            <div>
+                <div>
+                    <h2>Registration</h2>
+                </div>
+                <RegistrationTable participants={participants}/>
+            </div>
+            
+        </>)
 }
 
 export default Registration;
