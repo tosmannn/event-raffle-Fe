@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { ParticipantDto } from "../types/participant";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
@@ -7,12 +7,20 @@ import { InputText } from 'primereact/inputtext';
 import { IconField } from 'primereact/iconfield';
 import { InputIcon } from 'primereact/inputicon';
 import { Button } from "primereact/button";
+import { ParticipantService } from "../services/participantService";
+import { Toast } from "primereact/toast";
+import { ToastService } from "../services/toastService";
+import { AxiosError } from "axios";
 
 interface RegistrationTableProps {
     participants: ParticipantDto[];
 }
 
 const RegistrationTable: React.FC<RegistrationTableProps> = ({ participants }) => {
+    const toastRef = useRef<Toast>(null!);
+    const toast = new ToastService(toastRef);
+
+    const [_participants, setParticipants] = useState<ParticipantDto[]>([]);
 
     const [filters, setFilters] = useState({
         global: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -21,6 +29,10 @@ const RegistrationTable: React.FC<RegistrationTableProps> = ({ participants }) =
         lastName: { value: null, matchMode: FilterMatchMode.STARTS_WITH }
     });
     const [globalFilterValue, setGlobalFilterValue] = useState('');
+
+    useEffect(() => {
+        setParticipants(participants);
+    }, [participants])
 
     const columns = [
         { filterField: 'employeeId', header: 'Id' },
@@ -51,13 +63,46 @@ const RegistrationTable: React.FC<RegistrationTableProps> = ({ participants }) =
 
     const header = renderHeader();
 
-    const hanldeRegister = (id: string) => {
-    
+    const handleRegister = async (id: string) => {
+        try {
+            const result = await ParticipantService.register(id);
+
+            if (!result?.data) {
+                toast.showError("Unexpected response from server.");
+                return;
+            }
+
+            if (result?.data?.success) {
+                toast.showSuccess(result.data.message!)
+                handleUpdateTable(id);
+
+                return;
+            }
+
+            toast.showError(result.data.message!);
+
+        } catch (error) {
+            const err = error as AxiosError;
+
+            console.error("API error:", err.response?.data || err.message);
+            toast.showError("Failed to reach the server or process the request.");
+        }
+    }
+
+    const handleUpdateTable = (id: string) => {
+        const updatedParticipants = _participants.map(ep =>
+            ep.id === id
+                ? { ...ep, isRegistered: true }
+                : ep
+        );
+
+        setParticipants(updatedParticipants);
     }
 
     return <>
+        <Toast ref={toastRef} />
         <DataTable
-            value={participants}
+            value={_participants}
             tableStyle={{ minWidth: '50rem', minHeight: '30rem' }}
             rows={10}
             dataKey={"id"}
@@ -79,10 +124,10 @@ const RegistrationTable: React.FC<RegistrationTableProps> = ({ participants }) =
                 header="Action"
                 body={(rowData: ParticipantDto) => (
                     <Button
-                        label="Register"
+                        label={rowData.isRegistered ? "Registered" : "Register"}
                         icon="pi pi-user-plus"
                         className="p-button-sm"
-                        onClick={() => hanldeRegister(rowData.id)}
+                        onClick={() => handleRegister(rowData.id)}
                         disabled={rowData.isRegistered}
                     />
                 )}
