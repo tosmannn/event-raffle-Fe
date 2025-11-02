@@ -1,4 +1,3 @@
-// src/layouts/MainLayout.tsx
 import React, { useState } from 'react';
 import SidebarMenu from '../components/sidebar/Sidebar';
 import { Button } from 'primereact/button';

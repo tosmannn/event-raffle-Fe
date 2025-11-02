@@ -12,7 +12,11 @@ const createParticipants = (formData: FormData) =>
 const getParticipants = (eventId: string) =>
     apiClient.get<ResultModel<ParticipantDto[]>>(`api/v1/participant/event/${eventId}/participants`);
 
+const register = (id: string) => 
+    apiClient.post<ResultModel<boolean>>(`api/v1/participant/${id}/register`)
+
 export const ParticipantService = {
     createParticipants,
-    getParticipants
+    getParticipants,
+    register
 };
